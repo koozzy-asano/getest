@@ -102,6 +102,79 @@
       line-height: 1.9;
       font-size: 1rem;
     }
+
+/* スマホ・LINE内ブラウザ向け調整 */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
+}
+
+.container {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 18px;
+}
+
+button {
+  touch-action: manipulation;
+}
+
+.answer-btn {
+  width: 100%;
+  min-height: 64px;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+@media screen and (max-width: 480px) {
+  h1 {
+    font-size: 1.8rem;
+  }
+
+  p {
+    font-size: 1rem;
+  }
+
+  .start-btn,
+  .retry-btn {
+    width: 90%;
+    max-width: 320px;
+    padding: 18px 20px;
+    font-size: 1.15rem;
+  }
+
+  .answer-btn {
+    font-size: 0.95rem;
+    padding: 16px 18px;
+  }
+
+  #q-text {
+    font-size: 1.15rem;
+  }
+
+  #result-job {
+    font-size: 1.7rem;
+  }
+}
+
+.note {
+  font-size: 0.85rem;
+  color: #ccc;
+  margin-top: 20px;
+  line-height: 1.7;
+}
   </style>
 </head>
 
@@ -143,6 +216,11 @@
       </div>
 
       <button class="retry-btn" onclick="restartDiagnosis()">もう一度診断する</button>
+      <button class="retry-btn" onclick="shareDiagnosis()">診断ページを共有する</button>
+
+      <p class="note">
+       この診断は、遊技機開発に関わる職種への興味・思考傾向を簡易的に見るものです。
+      </p>
     </section>
 
   </div>
@@ -305,6 +383,28 @@
       document.getElementById('result-screen').style.display = 'none';
       document.getElementById('top-screen').style.display = 'block';
     }
+function shareDiagnosis() {
+  const url = "https://koozzy-asano.github.io/getest/";
+  const text = "遊技機開発 適性職種診断をやってみました。";
+
+  if (navigator.share) {
+    navigator.share({
+      title: "遊技機開発 適性職種診断",
+      text: text,
+      url: url
+    }).catch((error) => {
+      console.log("共有がキャンセルされました", error);
+    });
+  } else {
+    navigator.clipboard.writeText(url)
+      .then(() => {
+        alert("診断ページのURLをコピーしました。LINEに貼り付けて共有できます。");
+      })
+      .catch(() => {
+        alert("URLはこちらです：\n" + url);
+      });
+  }
+}
   </script>
 </body>
 </html>
