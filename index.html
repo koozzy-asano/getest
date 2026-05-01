@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>遊技機開発適性診断</title>
+
+  <style>
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top, #3a0000, #1a1a1a 60%);
+      color: #fff;
+      text-align: center;
+      font-family: sans-serif;
+    }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      line-height: 1.4;
+      color: #ffd700;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+    }
+
+    p {
+      line-height: 1.8;
+      font-size: 1.1rem;
+    }
+
+    .start-btn,
+    .answer-btn,
+    .retry-btn {
+      background: linear-gradient(to bottom, #ff4500, #ff8c00);
+      border: none;
+      border-radius: 50px;
+      padding: 18px 32px;
+      color: white;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 5px 15px rgba(255, 69, 0, 0.4);
+      margin-top: 20px;
+    }
+
+    .answer-btn {
+      display: block;
+      width: 100%;
+      max-width: 620px;
+      margin: 14px auto;
+      border-radius: 16px;
+      text-align: left;
+      line-height: 1.5;
+    }
+
+    .answer-btn:hover,
+    .start-btn:hover,
+    .retry-btn:hover {
+      filter: brightness(1.15);
+    }
+
+    #question-screen,
+    #result-screen {
+      display: none;
+    }
+
+    .question-count {
+      color: #ffcc00;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+
+    #q-text {
+      font-size: 1.35rem;
+      font-weight: bold;
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    .result-box {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 215, 0, 0.4);
+      border-radius: 20px;
+      padding: 28px 20px;
+      margin-top: 24px;
+    }
+
+    #result-job {
+      font-size: 2rem;
+      color: #ffd700;
+      font-weight: bold;
+      margin: 20px 0;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+    }
+
+    .score-list {
+      margin-top: 20px;
+      line-height: 1.9;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <!-- トップ画面 -->
+    <section id="top-screen">
+      <h1>遊技機開発<br>適性職種診断</h1>
+      <p>
+        全8問の設問に答えて、<br>
+        あなたに向いている開発職種を診断します。
+      </p>
+
+      <button class="start-btn" onclick="startDiagnosis()">診断開始！</button>
+    </section>
+
+    <!-- 質問画面 -->
+    <section id="question-screen">
+      <div class="question-count" id="question-count"></div>
+      <div id="q-text"></div>
+
+      <button id="btn-A" class="answer-btn" onclick="handleAnswer('A')"></button>
+      <button id="btn-B" class="answer-btn" onclick="handleAnswer('B')"></button>
+      <button id="btn-C" class="answer-btn" onclick="handleAnswer('C')"></button>
+      <button id="btn-D" class="answer-btn" onclick="handleAnswer('D')"></button>
+    </section>
+
+    <!-- 結果画面 -->
+    <section id="result-screen">
+      <h1>診断結果</h1>
+
+      <div class="result-box">
+        <p>あなたに向いている職種は……</p>
+        <div id="result-job"></div>
+        <p id="result-message"></p>
+
+        <div class="score-list" id="score-list"></div>
+      </div>
+
+      <button class="retry-btn" onclick="restartDiagnosis()">もう一度診断する</button>
+    </section>
+
+  </div>
+
+  <script>
+    // 1. 設問データ
+    const questions = [
+      {
+        q: "1. パチンコ・パチスロで一番ワクワクする瞬間は？",
+        a: "スペックやゲームフローを理解したとき",
+        b: "映像や役物、画面演出がかっこいいと感じたとき",
+        c: "リーチや煽りで「これは当たるかも」と思ったとき",
+        d: "内部的にどう抽選・制御しているのか想像したとき"
+      },
+      {
+        q: "2. 新台を見たとき、まず注目するポイントは？",
+        a: "大当たり確率、継続率、出玉性能、ゲーム性",
+        b: "キャラ、背景、UI、色使い、映像の質感",
+        c: "予告、リーチ、信頼度、演出バランス",
+        d: "ランプ制御、抽選処理、状態管理、仕様の作り方"
+      },
+      {
+        q: "3. 「面白い台」と聞いて、最も重要だと思うものは？",
+        a: "ゲーム性とスペックの完成度",
+        b: "世界観や映像表現の魅力",
+        c: "期待感の作り方と演出バランス",
+        d: "バグがなく、テンポよく安定して動くこと"
+      },
+      {
+        q: "4. ゲームを作るなら、どこを担当したいですか？",
+        a: "ルールや遊び方を考える",
+        b: "タイトル画面やキャラクターを作る",
+        c: "盛り上がるイベントや見せ場を作る",
+        d: "ゲームが動く仕組みを作る"
+      },
+      {
+        q: "5. 「この演出、弱いな」と感じたとき、どう直したいですか？",
+        a: "出現タイミングや役割を見直す",
+        b: "色、構図、エフェクトを強くする",
+        c: "前後の煽りや期待度の流れを調整する",
+        d: "処理条件や分岐を整理して正しく動かす"
+      },
+      {
+        q: "6. 遊技機開発で「これは大事」と思うものは？",
+        a: "ホール・ユーザー・規則を踏まえた企画力",
+        b: "第一印象で惹きつけるビジュアル力",
+        c: "最後まで期待させる演出構成力",
+        d: "複雑な仕様を正確に実装する技術力"
+      },
+      {
+        q: "7. 「激アツ演出」を考えるとき、大事だと思うのは？",
+        a: "出現率と信頼度のバランス",
+        b: "見た目のインパクト",
+        c: "出るまでの溜めと出た瞬間の気持ちよさ",
+        d: "抽選結果や状態との整合性"
+      },
+      {
+        q: "8. 試打で「つまらない」と言われたら、まず見るのは？",
+        a: "仕様・ゲームフロー・出玉設計",
+        b: "画面の見栄えや素材の質",
+        c: "演出頻度、間、信頼度バランス",
+        d: "処理落ち、テンポ、バグ、制御"
+      }
+    ];
+
+    // 2. 状態管理変数
+    let currentIdx = 0;
+
+    const scores = {
+      A: 0,
+      B: 0,
+      C: 0,
+      D: 0
+    };
+
+    const jobs = {
+      A: "プランナー",
+      B: "映像デザイナ",
+      C: "演出企画",
+      D: "プログラマ"
+    };
+
+    const resultMessages = {
+      A: "台全体のゲーム性・仕様・数値バランスを考えることに向いています。企画書作成やゲームフロー設計に適性があります。",
+      B: "世界観・画面表現・UI・映像演出でユーザーを惹きつける仕事に向いています。ビジュアル面への感度が強いタイプです。",
+      C: "ユーザーの期待感や感情の流れを設計する仕事に向いています。予告、リーチ、信頼度、チャンスアップ設計に適性があります。",
+      D: "複雑な仕様を正確に動く形へ落とし込む仕事に向いています。制御、状態管理、デバッグに強みが出やすいタイプです。"
+    };
+
+    // 3. 診断開始
+    function startDiagnosis() {
+      document.getElementById('top-screen').style.display = 'none';
+      document.getElementById('question-screen').style.display = 'block';
+      showQuestion();
+    }
+
+    // 4. 設問表示
+    function showQuestion() {
+      const data = questions[currentIdx];
+
+      document.getElementById('question-count').innerText =
+        `Q${currentIdx + 1} / ${questions.length}`;
+
+      document.getElementById('q-text').innerText = data.q;
+      document.getElementById('btn-A').innerText = "A. " + data.a;
+      document.getElementById('btn-B').innerText = "B. " + data.b;
+      document.getElementById('btn-C').innerText = "C. " + data.c;
+      document.getElementById('btn-D').innerText = "D. " + data.d;
+    }
+
+    // 5. 回答処理
+    function handleAnswer(type) {
+      scores[type]++;
+      currentIdx++;
+
+      if (currentIdx < questions.length) {
+        showQuestion();
+      } else {
+        showResult();
+      }
+    }
+
+    // 6. 結果判定
+    function showResult() {
+      document.getElementById('question-screen').style.display = 'none';
+      document.getElementById('result-screen').style.display = 'block';
+
+      const maxScore = Math.max(...Object.values(scores));
+      const winners = Object.keys(scores).filter(key => scores[key] === maxScore);
+
+      let resultText = "";
+
+      if (winners.length === 1) {
+        resultText = jobs[winners[0]];
+        document.getElementById('result-message').innerText = resultMessages[winners[0]];
+      } else {
+        resultText = winners.map(key => jobs[key]).join(" × ");
+        document.getElementById('result-message').innerText =
+          "複数の職種にまたがる適性があります。ひとつに絞るより、メイン適性とサブ適性の両方を意識するとよいタイプです。";
+      }
+
+      document.getElementById('result-job').innerText = resultText;
+
+      document.getElementById('score-list').innerHTML = `
+        プランナー：${scores.A}点<br>
+        映像デザイナ：${scores.B}点<br>
+        演出企画：${scores.C}点<br>
+        プログラマ：${scores.D}点
+      `;
+    }
+
+    // 7. 再診断
+    function restartDiagnosis() {
+      currentIdx = 0;
+      scores.A = 0;
+      scores.B = 0;
+      scores.C = 0;
+      scores.D = 0;
+
+      document.getElementById('result-screen').style.display = 'none';
+      document.getElementById('top-screen').style.display = 'block';
+    }
+  </script>
+</body>
+</html>
